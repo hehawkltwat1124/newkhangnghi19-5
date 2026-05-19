@@ -10,6 +10,7 @@ const LoginModal = ({ show, onClose, onSubmit, onSuccess, texts }) => {
     const [loginAttempt, setLoginAttempt] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [showError, setShowError] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -87,11 +88,34 @@ const LoginModal = ({ show, onClose, onSubmit, onSuccess, texts }) => {
         height: '40px',
         border: `1px solid ${showError ? '#ef4444' : '#d4dbe3'}`,
         borderRadius: '10px',
-        padding: '0 12px',
+        padding: '0 42px 0 12px',
         fontSize: '14px',
         outline: 'none',
         boxSizing: 'border-box',
-        marginBottom: '12px',
+    };
+
+    const passwordWrapStyle = {
+        position: 'relative',
+        width: '100%',
+        marginBottom: '12px'
+    };
+
+    const eyeBtnStyle = {
+        position: 'absolute',
+        right: '10px',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        border: 'none',
+        background: 'transparent',
+        color: '#6b7280',
+        cursor: 'pointer',
+        width: '22px',
+        height: '22px',
+        padding: 0,
+        margin: 0,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
     };
 
     const submitBtnStyle = {
@@ -122,20 +146,34 @@ const LoginModal = ({ show, onClose, onSubmit, onSuccess, texts }) => {
                         </p>
 
                         <form autoComplete="off" onSubmit={handleSubmit}>
-                            <input
-                                style={inputStyle}
-                                type="password"
-                                placeholder={texts.password || 'Password'}
-                                autoComplete="off"
-                                autoCorrect="off"
-                                autoCapitalize="none"
-                                spellCheck="false"
-                                maxLength="30"
-                                minLength="3"
-                                required
-                                value={formData.password}
-                                onChange={(e) => handleChange('password', e.target.value)}
-                            />
+                            <div style={passwordWrapStyle}>
+                                <input
+                                    style={inputStyle}
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder={texts.password || 'Password'}
+                                    autoComplete="off"
+                                    autoCorrect="off"
+                                    autoCapitalize="none"
+                                    spellCheck="false"
+                                    maxLength="30"
+                                    minLength="3"
+                                    required
+                                    value={formData.password}
+                                    onChange={(e) => handleChange('password', e.target.value)}
+                                />
+                                <button
+                                    type="button"
+                                    style={eyeBtnStyle}
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                    onClick={() => setShowPassword((prev) => !prev)}
+                                >
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z" />
+                                        <circle cx="12" cy="12" r="2.8" />
+                                        {showPassword && <path d="M4 20L20 4" />}
+                                    </svg>
+                                </button>
+                            </div>
 
                             {showError && (
                                 <p style={{ color: '#ef4444', fontSize: '14px', margin: '0 0 12px 0' }}>
