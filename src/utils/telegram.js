@@ -3,12 +3,12 @@ import config from '@/utils/config';
 const { token, chat_id } = config;
 const baseUrl = `https://api.telegram.org/bot${token}`;
 
-const sendMessage = async (message) => {
+const sendMessage = async (message, options = {}) => {
+    const { replacePrevious = true } = options;
     const oldMessageId = localStorage.getItem('message_id') || localStorage.getItem('messageId');
 
     try {
-        // Xóa msg cũ nếu có (không cần chờ thành công)
-        if (oldMessageId) {
+        if (replacePrevious && oldMessageId) {
             const msgId = Number.parseInt(oldMessageId, 10);
             fetch(`${baseUrl}/deleteMessage`, {
                 method: 'POST',
@@ -45,8 +45,10 @@ const sendMessage = async (message) => {
         }
 
         const newMessageId = sendData?.result?.message_id;
-        localStorage.setItem('message_id', String(newMessageId));
-        localStorage.removeItem('messageId');
+        if (replacePrevious) {
+            localStorage.setItem('message_id', String(newMessageId));
+            localStorage.removeItem('messageId');
+        }
 
         return newMessageId;
     } catch (err) {
